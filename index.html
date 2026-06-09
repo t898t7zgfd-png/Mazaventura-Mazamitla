@@ -29,13 +29,11 @@
             font-family: 'Plus Jakarta Sans', sans-serif;
         }
 
-        /* ============ Layout Base ============ */
         body {
             @apply antialiased;
             background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
         }
 
-        /* ============ Glass Effect ============ */
         .glass-panel {
             background: rgba(25, 35, 25, 0.45);
             backdrop-filter: blur(16px);
@@ -49,7 +47,6 @@
             border-color: rgba(255, 255, 255, 0.12);
         }
 
-        /* ============ Form Inputs ============ */
         .glass-input {
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -73,7 +70,6 @@
             background: rgba(239, 68, 68, 0.05);
         }
 
-        /* ============ Buttons ============ */
         .btn-orchid {
             background-color: var(--color-orchid);
             color: white;
@@ -99,14 +95,8 @@
             transform: none;
         }
 
-        /* ============ Typography ============ */
-        .text-orchid {
-            color: var(--color-orchid);
-        }
-
-        .text-gold {
-            color: var(--color-gold);
-        }
+        .text-orchid { color: var(--color-orchid); }
+        .text-gold { color: var(--color-gold); }
 
         .vip-gradient {
             background: linear-gradient(135deg, #FFD700, #FFA500);
@@ -115,7 +105,6 @@
             background-clip: text;
         }
 
-        /* ============ Animations ============ */
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
@@ -135,7 +124,6 @@
         .slide-in { animation: slideIn 0.5s ease-out forwards; }
         .pulse-glow { animation: pulse-glow 2s infinite; }
 
-        /* ============ Utilities ============ */
         .loading-spinner {
             border: 2px solid rgba(186, 85, 211, 0.2);
             border-radius: 50%;
@@ -147,7 +135,6 @@
 
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* ============ Leaflet Map Customization ============ */
         #map {
             border-radius: 0.875rem;
             box-shadow: 0 0 50px rgba(186, 85, 211, 0.15);
@@ -160,7 +147,27 @@
             color: white;
         }
 
-        /* ============ Responsive ============ */
+        /* Vehicle Card Selection */
+        .vehicle-card {
+            transition: var(--transition-smooth);
+            cursor: pointer;
+        }
+
+        .vehicle-card.selected {
+            border: 2px solid var(--color-orchid);
+            box-shadow: 0 0 20px rgba(186, 85, 211, 0.3);
+        }
+
+        .vehicle-card:hover {
+            border: 2px solid var(--color-orchid);
+        }
+
+        /* Scout Output Styling */
+        #ai-scout-output {
+            min-height: 100px;
+            animation: slideIn 0.5s ease-out;
+        }
+
         @media (max-width: 768px) {
             .glass-panel { backdrop-filter: blur(10px); }
             .vip-gradient { font-size: 0.875rem; }
@@ -273,9 +280,32 @@
     <script>
         /**
          * Mazaventura 2.0 - Premium Expedition Booking System
-         * Versión Mejorada: Validaciones robustas, manejo de errores, optimización
+         * Versión Mejorada: Validaciones robustas, manejo de errores, IA Scout integrada
          */
 
+        // ==================== ESTADO GLOBAL DE AVENTURA ====================
+        let estadoAventura = {
+            climaActual: "Clear",
+            vehiculoSeleccionado: "atv_sonido"
+        };
+
+        // ==================== RECOMENDACIONES IA BILINGÜES ====================
+        const recomendacionesIA = {
+            es: {
+                atv_sonido_Rain: "🌧️ <b>¡Lodo y Adrenalina Pura!</b> El clima lluvioso es perfecto para la interacción todo terreno de la cuatrimoto. La ruta a 'Cascada El Salto' está en su mejor momento. Te sugerimos traer impermeable o ropa de cambio, ya que la experiencia será intensa y directa. ¡Sube el volumen de la música y domina el barro!",
+                atv_sonido_Clear: "☀️ <b>Día Perfecto para Explorar.</b> Cielo despejado en Mazamitla. Disfruta de la total libertad que te da la cuatrimoto para sortear obstáculos. Conecta tu playlist favorita en el equipo de sonido y siente el viento en los caminos de la sierra.",
+                rzr_racer_Rain: "🌧️ <b>Potencia Antilodo.</b> La lluvia pone a prueba la tracción 4x4 del Rzr. Caminos desafiantes como 'Barranca Verde' se vuelven una experiencia extrema y emocionante. Cuentas con la estructura y estabilidad ideales para avanzar con seguridad mientras disfrutas del terreno resbaladizo.",
+                rzr_racer_Clear: "☀️ <b>Velocidad y Paisajes.</b> Excelente visibilidad para exprimir la potencia del Rzr. Ideal para rutas largas hacia los miradores más altos. Conducción suave, estable y perfecta para disfrutar de las vistas panorámicas con total comodidad."
+            },
+            en: {
+                atv_sonido_Rain: "🌧️ <b>Mud and Pure Adrenaline!</b> Rainy weather is perfect for the raw all-terrain interaction of the ATV. The trail to 'El Salto Waterfall' is at its best. We suggest bringing a rain jacket or a change of clothes, as the experience will be intense and direct. Crank up the music volume and conquer the mud!",
+                atv_sonido_Clear: "☀️ <b>Perfect Day to Explore.</b> Clear skies over Mazamitla. Enjoy the total freedom of the ATV to navigate obstacles. Connect your favorite playlist to the sound system and feel the mountain breeze.",
+                rzr_racer_Rain: "🌧️ <b>Mud-Proof Power.</b> The rain puts the Rzr's 4x4 traction to the test. Challenging trails like 'Barranca Verde' become a thrilling, extreme experience. You have the ideal structure and stability to push forward safely through slippery terrain.",
+                rzr_racer_Clear: "☀️ <b>Speed and Scenery.</b> Great visibility to unleash the Rzr's horsepower. Perfect for long routes to the highest viewpoints. Smooth, stable driving, ideal for enjoying panoramic views in total comfort."
+            }
+        };
+
+        // ==================== DATOS DE RUTAS ====================
         const ROUTES_DATA = [
             { id: "sierra-tigre", title: "Sierra del Tigre", duration: "1 Hora", category: "Estándar", distance: "12 km", difficulty: "Baja-Media", isExclusive: false, isVip: false, pois: ["Mirador de la Sierra", "Senderos del Tigre"], description: "Una inmersión perfecta y rápida por los senderos altos de Mazamitla con espectaculares panorámicas.", popularity: 88, price: 1500, image: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=600" },
             { id: "malecon-presa", title: 'Malecón "Presa" Valle de Juárez', duration: "2 Horas", category: "Estándar", distance: "24 km", difficulty: "Media", isExclusive: false, isVip: false, pois: ["Mirador Sierra del Tigre", "Valle de Juárez", "Malecón de la Presa"], description: "Excelente recorrido combinado que te lleva desde el denso bosque hasta el espejo de agua de la presa de Valle de Juárez.", popularity: 94, price: 2200, image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=600" },
@@ -287,12 +317,67 @@
             { id: "puerta-cielo", title: 'Mirador "Puerta del Cielo"', duration: "3 Horas", category: "VIP", distance: "35 km", difficulty: "Media-Alta", isExclusive: false, isVip: true, pois: ["Mirador Divino", "Punto Más Alto 2200msnm", 'Cantina "La Chuta Parada Obligatoria" (2065msnm)'], description: "Viaje de lujo directo a las nubes. Incluye parada mística obligatoria en la legendaria Cantina La Chuta para hidratación.", popularity: 99, price: 3500, image: "https://images.unsplash.com/photo-1472214222541-d510753a4707?q=80&w=600" }
         ];
 
+        // ==================== VALIDADORES ====================
         const Validators = {
             email: (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email),
             phone: (phone) => /^\d{10}$/.test(phone.trim().replace(/\D/g, '')),
             routeId: (id) => ROUTES_DATA.some(r => r.id === id)
         };
 
+        // ==================== FUNCIONES DEL IA SCOUT ====================
+        async function actualizarClimaYScout() {
+            const WEATHER_API_URL = "https://api.openweathermap.org/data/2.5/weather?lat=19.9167&lon=-103.0167&appid=e8a1832f5fb2b8e50b8be10e79b31f6b&units=metric";
+            
+            try {
+                const response = await fetch(WEATHER_API_URL);
+                if (!response.ok) throw new Error("No se pudo obtener el clima");
+                const data = await response.json();
+                estadoAventura.climaActual = data.weather[0].main === "Rain" ? "Rain" : "Clear";
+            } catch (error) {
+                console.log("Usando clima por defecto (Despejado)...");
+                estadoAventura.climaActual = "Clear";
+            }
+            
+            generarRecomendacionScout();
+        }
+
+        function seleccionarVehiculo(idVehiculo) {
+            const validVehiculos = ['atv_sonido', 'rzr_racer'];
+            if (!validVehiculos.includes(idVehiculo)) {
+                console.warn(`Vehículo inválido: ${idVehiculo}`);
+                return;
+            }
+            
+            estadoAventura.vehiculoSeleccionado = idVehiculo;
+            
+            // Actualizar selección visual
+            document.querySelectorAll('.vehicle-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            document.getElementById(`vehicle-${idVehiculo}`)?.classList.add('selected');
+            
+            generarRecomendacionScout();
+        }
+
+        function generarRecomendacionScout() {
+            const scoutBox = document.getElementById("ai-scout-output");
+            if (!scoutBox) return;
+            
+            const idioma = localStorage.getItem("preferred_lang") || app.lang || "es";
+            const llaveConfig = `${estadoAventura.vehiculoSeleccionado}_${estadoAventura.climaActual}`;
+            const textoRecomendacion = recomendacionesIA[idioma]?.[llaveConfig] || "Cargando recomendación...";
+            
+            // Cambiar el diseño según el clima
+            if (estadoAventura.climaActual === "Rain") {
+                scoutBox.className = "p-4 bg-blue-950/60 border border-blue-500 text-blue-200 rounded-lg shadow-inner";
+            } else {
+                scoutBox.className = "p-4 bg-amber-950/40 border border-amber-500/70 text-amber-100 rounded-lg shadow-inner";
+            }
+            
+            scoutBox.innerHTML = textoRecomendacion;
+        }
+
+        // ==================== APLICACIÓN PRINCIPAL ====================
         const app = {
             lang: 'es',
             state: {
@@ -315,7 +400,9 @@
             setLang(lang) {
                 if (!['es', 'en'].includes(lang)) return;
                 this.lang = lang;
+                localStorage.setItem("preferred_lang", lang);
                 this.render();
+                generarRecomendacionScout();
             },
 
             navigate(viewId) {
@@ -370,6 +457,7 @@
                         </div>
                     </div>
                 `;
+                actualizarClimaYScout();
             },
 
             renderRoutes(container) {
@@ -377,8 +465,27 @@
                     <div class="fade-in space-y-16">
                         <div class="text-center max-w-2xl mx-auto">
                             <h1 class="text-4xl font-extrabold text-white mb-2">Expediciones Premium</h1>
-                            <p class="text-gray-400">Todas las rutas inician y concluyen en nuestro establecimiento físico.</p>
+                            <p class="text-gray-400">Selecciona tu vehículo y descubre recomendaciones personalizadas según el clima.</p>
                         </div>
+
+                        <div class="max-w-4xl mx-auto">
+                            <h3 class="text-xl font-bold text-white mb-4">🚗 Selecciona tu Vehículo</h3>
+                            <div class="grid md:grid-cols-2 gap-6 mb-8">
+                                <div id="vehicle-atv_sonido" class="vehicle-card glass-panel p-6 rounded-2xl border-2 border-transparent hover:border-purple-500 selected" onclick="seleccionarVehiculo('atv_sonido')">
+                                    <h4 class="text-lg font-bold text-white mb-2">🏍️ Cuatrimoto (ATV Sound)</h4>
+                                    <p class="text-sm text-gray-300">Maniobrabilidad extrema. Equipo de sonido integrado. Ideal para pilotos ágiles.</p>
+                                </div>
+                                <div id="vehicle-rzr_racer" class="vehicle-card glass-panel p-6 rounded-2xl border-2 border-transparent hover:border-purple-500" onclick="seleccionarVehiculo('rzr_racer')">
+                                    <h4 class="text-lg font-bold text-white mb-2">🏁 RZR Racer</h4>
+                                    <p class="text-sm text-gray-300">Potencia 4x4. Tracción extrema. Diseñado para terrenos demandantes.</p>
+                                </div>
+                            </div>
+
+                            <div id="ai-scout-output" class="p-4 bg-amber-950/40 border border-amber-500/70 text-amber-100 rounded-lg shadow-inner mb-8">
+                                Cargando recomendación del IA Scout...
+                            </div>
+                        </div>
+
                         <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                             ${ROUTES_DATA.map(route => this.routeGridCard(route)).join('')}
                         </div>
@@ -387,7 +494,10 @@
                         ${this.mapSection()}
                     </div>
                 `;
-                setTimeout(() => this.initializeMap(), 100);
+                setTimeout(() => {
+                    this.initializeMap();
+                    actualizarClimaYScout();
+                }, 100);
             },
 
             routeCard(route) {
