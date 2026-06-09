@@ -16,6 +16,10 @@
     
     <!-- Leaflet Map -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script src='https://api.mapbox.com/mapbox.js/plugins/leaflet-omnivore/v0.3.1/leaflet-omnivore.min.js'></script>
+
     
     <style>
         :root {
@@ -137,8 +141,8 @@
         @keyframes spin { to { transform: rotate(360deg); } }
 
         #map {
-            border-radius: 0.875rem;
-            box-shadow: 0 0 50px rgba(186, 85, 211, 0.15);
+            <div id="map" class="w-full h-96 rounded-xl shadow-lg mt-4"></div>
+
         }
 
         .leaflet-popup-content-wrapper {
