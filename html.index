@@ -1,0 +1,929 @@
+<!DOCTYPE HTML>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Mazaventura 2.0 - Expediciones Premium en Mazamitla">
+    <meta name="theme-color" content="#BA55D3">
+    <title>Mazaventura 2.0 - Expediciones Premium</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Leaflet Map (una sola vez) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        :root {
+            --color-orchid: #BA55D3;
+            --color-orchid-dark: #9c4ab0;
+            --color-gold: #FFD700;
+            --color-primary-dark: #1a1a1a;
+            --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        body {
+            @apply antialiased;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+        }
+
+        .glass-panel {
+            background: rgba(25, 35, 25, 0.45);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: var(--transition-smooth);
+        }
+
+        .glass-panel:hover {
+            background: rgba(25, 35, 25, 0.55);
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+
+        .glass-input {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            transition: var(--transition-smooth);
+        }
+
+        .glass-input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .glass-input:focus {
+            border-color: var(--color-orchid);
+            background: rgba(255, 255, 255, 0.1);
+            outline: none;
+            box-shadow: 0 0 12px rgba(186, 85, 211, 0.2);
+        }
+
+        .glass-input.error {
+            border-color: #ef4444;
+            background: rgba(239, 68, 68, 0.05);
+        }
+
+        .btn-orchid {
+            background-color: var(--color-orchid);
+            color: white;
+            font-weight: bold;
+            transition: var(--transition-smooth);
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-orchid:hover:not(:disabled) {
+            background-color: var(--color-orchid-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(186, 85, 211, 0.3);
+        }
+
+        .btn-orchid:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .btn-orchid:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .text-orchid { color: var(--color-orchid); }
+        .text-gold { color: var(--color-gold); }
+
+        .vip-gradient {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(186, 85, 211, 0.4); }
+            50% { box-shadow: 0 0 0 8px rgba(186, 85, 211, 0); }
+        }
+
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        .slide-in { animation: slideIn 0.5s ease-out forwards; }
+        .pulse-glow { animation: pulse-glow 2s infinite; }
+
+        .loading-spinner {
+            border: 2px solid rgba(186, 85, 211, 0.2);
+            border-radius: 50%;
+            border-top: 2px solid var(--color-orchid);
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* FIX: Mapa CSS correcto */
+        #map {
+            border-radius: 1rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .leaflet-popup-content-wrapper {
+            background: rgba(25, 35, 25, 0.95) !important;
+            border-radius: 0.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            color: white;
+        }
+
+        .vehicle-card {
+            transition: var(--transition-smooth);
+            cursor: pointer;
+        }
+
+        .vehicle-card.selected {
+            border: 2px solid var(--color-orchid);
+            box-shadow: 0 0 20px rgba(186, 85, 211, 0.3);
+        }
+
+        .vehicle-card:hover {
+            border: 2px solid var(--color-orchid);
+        }
+
+        #ai-scout-output {
+            min-height: 100px;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @media (max-width: 768px) {
+            .glass-panel { backdrop-filter: blur(10px); }
+            .vip-gradient { font-size: 0.875rem; }
+            .hero-title { font-size: 2.5rem; }
+        }
+    </style>
+</head>
+
+<body class="min-h-screen text-gray-100 overflow-x-hidden">
+    <div class="min-h-screen flex flex-col">
+
+        <!-- ==================== NAVIGATION ==================== -->
+        <nav class="sticky top-0 z-50 glass-panel px-6 py-4 flex justify-between items-center gap-4 border-b border-white/5" role="navigation" aria-label="Navegación principal">
+            <div class="flex items-center gap-3 cursor-pointer hover:opacity-80 transition" onclick="app.navigate('home')" role="button" tabindex="0" aria-label="Ir a inicio">
+                <svg class="w-8 h-8 text-orchid" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"></path>
+                </svg>
+                <span class="font-extrabold text-xl tracking-wider uppercase bg-clip-text text-transparent bg-gradient-to-r from-white via-purple-300 to-purple-400 hidden sm:inline">
+                    MAZAVENTURA 2.0
+                </span>
+            </div>
+
+            <div class="hidden md:flex gap-8 font-medium">
+                <button onclick="app.navigate('home')" class="hover:text-purple-300 transition duration-300 text-sm">Inicio</button>
+                <button onclick="app.navigate('routes')" class="hover:text-purple-300 transition duration-300 text-sm">Nuestras Rutas</button>
+                <button onclick="document.getElementById('contacto').scrollIntoView({behavior: 'smooth'})" class="hover:text-purple-300 transition duration-300 text-sm">Contacto</button>
+                <button onclick="app.navigate('admin')" class="hover:text-purple-300 transition duration-300 text-gray-400 text-sm">Panel Admin</button>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <select id="langToggle" onchange="app.setLang(this.value)" class="bg-black/50 text-white p-2 text-sm border border-gray-700 rounded hover:border-purple-500 transition" aria-label="Seleccionar idioma">
+                    <option value="es">🇪🇸 ES</option>
+                    <option value="en">🇺🇸 EN</option>
+                </select>
+                <button onclick="app.navigate('routes')" class="btn-orchid px-6 py-2.5 rounded-full font-bold text-sm tracking-wide" aria-label="Explorar rutas">
+                    EXPLORAR
+                </button>
+            </div>
+        </nav>
+
+        <!-- ==================== MAIN CONTENT ==================== -->
+        <main id="view-container" class="flex-grow max-w-7xl mx-auto w-full px-4 sm:px-6 py-10" role="main">
+            <!-- Views injected dynamically -->
+        </main>
+
+        <!-- ==================== CONTACT SECTION ==================== -->
+        <section id="contacto" class="max-w-6xl mx-auto w-full px-4 sm:px-6 py-12 mt-8" aria-labelledby="contact-heading">
+            <div class="text-center mb-10">
+                <h2 id="contact-heading" class="text-3xl md:text-4xl font-extrabold text-white mb-3">Comienza tu Aventura</h2>
+                <p class="text-gray-400 text-sm md:text-base max-w-2xl mx-auto">Contáctanos directamente para reservas personalizadas, asistencia con el AI Scout o para agendar una expedición VIP.</p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-6">
+                <a href="https://wa.me/523312504151" target="_blank" rel="noopener noreferrer" class="glass-panel p-8 rounded-3xl flex flex-col items-center text-center group hover:border-purple-500/50 transition duration-300">
+                    <div class="w-16 h-16 bg-purple-500/10 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-purple-500/20 transition duration-300 border border-purple-500/30">
+                        <svg class="w-8 h-8 text-orchid" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">WhatsApp VIP</h3>
+                    <p class="text-sm text-gray-400 mb-4 flex-grow">Respuesta rápida. Nuestro equipo está listo para asegurar tu vehículo al instante.</p>
+                    <span class="text-orchid font-bold tracking-wider text-sm bg-purple-500/10 px-4 py-2 rounded-lg border border-purple-500/20 w-full">+52 33 1250 4151</span>
+                </a>
+
+                <a href="mailto:mazaventura@icloud.com" class="glass-panel p-8 rounded-3xl flex flex-col items-center text-center group hover:border-purple-500/50 transition duration-300">
+                    <div class="w-16 h-16 bg-purple-500/10 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-purple-500/20 transition duration-300 border border-purple-500/30">
+                        <svg class="w-8 h-8 text-orchid" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">Correo Electrónico</h3>
+                    <p class="text-sm text-gray-400 mb-4 flex-grow">Atención especializada para eventos corporativos o dudas detalladas de expedición.</p>
+                    <span class="text-orchid font-bold tracking-wider text-sm bg-purple-500/10 px-4 py-2 rounded-lg border border-purple-500/20 w-full">mazaventura@icloud.com</span>
+                </a>
+
+                <div class="glass-panel p-8 rounded-3xl flex flex-col items-center text-center group hover:border-purple-500/50 transition duration-300">
+                    <div class="w-16 h-16 bg-purple-500/10 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-purple-500/20 transition duration-300 border border-purple-500/30">
+                        <svg class="w-8 h-8 text-orchid" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.242-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">Base Operativa</h3>
+                    <p class="text-sm text-gray-400 mb-4 flex-grow">Punto oficial de inicio y fin de todas nuestras expediciones en RZR.</p>
+                    <span class="text-orchid font-bold tracking-wider text-sm bg-purple-500/10 px-4 py-2 rounded-lg border border-purple-500/20 w-full">Mazamitla, Jalisco</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== FOOTER ==================== -->
+        <footer class="glass-panel py-8 text-center text-sm text-gray-500 border-t border-white/5 mt-12" role="contentinfo">
+            <p>© 2026 Mazaventura. Todos los derechos reservados. | Diseñado para Expediciones de Alta Gama.</p>
+        </footer>
+    </div>
+
+    <!-- ==================== MODAL ==================== -->
+    <div id="custom-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4" role="dialog" aria-hidden="true" aria-modal="true">
+        <div class="bg-gray-900 border border-purple-500 p-8 rounded-2xl max-w-md w-full text-center animate-slide-in">
+            <div class="w-16 h-16 bg-purple-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-purple-500/30">
+                <svg class="w-8 h-8 text-orchid" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+            </div>
+            <h3 id="modal-title" class="text-2xl font-bold mb-2 text-white">Éxito</h3>
+            <p id="modal-desc" class="text-gray-400 mb-6"></p>
+            <button onclick="app.closeModal()" class="btn-orchid w-full py-3 rounded-xl">Aceptar</button>
+        </div>
+    </div>
+
+    <!-- ==================== NOTIFICATIONS ==================== -->
+    <div id="notification-center" class="fixed bottom-6 right-6 w-96 max-w-full space-y-3 z-50 pointer-events-none" aria-live="polite" aria-atomic="true"></div>
+
+    <!-- ==================== LEAFLET & APP SCRIPT ==================== -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        /**
+         * Mazaventura 2.0 - Premium Expedition Booking System
+         * Versión Mejorada: Validaciones robustas, manejo de errores, IA Scout integrado
+         */
+
+        // ==================== ESTADO GLOBAL ====================
+        let estadoAventura = {
+            climaActual: "Clear",
+            vehiculoSeleccionado: "atv_sonido"
+        };
+
+        // ==================== CONFIGURACIÓN ====================
+        const CONFIG = {
+            WEATHER_API_URL: "https://api.openweathermap.org/data/2.5/weather",
+            WEATHER_COORDS: { lat: 19.9167, lon: -103.0167 },
+            WEATHER_TIMEOUT: 5000,
+            MAP_ZOOM: 13,
+            SCARCITY_DELAY: 4000,
+            SCARCITY_DURATION: 10000
+        };
+
+        // ==================== RECOMENDACIONES IA ====================
+        const recomendacionesIA = {
+            es: {
+                atv_sonido_Rain: "🌧️ <b>¡Lodo y Adrenalina Pura!</b> El clima lluvioso es perfecto para la interacción todo terreno de la cuatrimoto. La ruta a 'Cascada El Salto' está en su mejor momento. Te sugerimos traer impermeable o ropa de cambio, ya que la experiencia será intensa y directa. ¡Sube el volumen de la música y domina el barro!",
+                atv_sonido_Clear: "☀️ <b>Día Perfecto para Explorar.</b> Cielo despejado en Mazamitla. Disfruta de la total libertad que te da la cuatrimoto para sortear obstáculos. Conecta tu playlist favorita en el equipo de sonido y siente el viento en los caminos de la sierra.",
+                rzr_racer_Rain: "🌧️ <b>Potencia Antilodo.</b> La lluvia pone a prueba la tracción 4x4 del Rzr. Caminos desafiantes como 'Barranca Verde' se vuelven una experiencia extrema y emocionante. Cuentas con la estructura y estabilidad ideales para avanzar con seguridad mientras disfrutas del terreno resbaladizo.",
+                rzr_racer_Clear: "☀️ <b>Velocidad y Paisajes.</b> Excelente visibilidad para exprimir la potencia del Rzr. Ideal para rutas largas hacia los miradores más altos. Conducción suave, estable y perfecta para disfrutar de las vistas panorámicas con total comodidad."
+            },
+            en: {
+                atv_sonido_Rain: "🌧️ <b>Mud and Pure Adrenaline!</b> Rainy weather is perfect for the raw all-terrain interaction of the ATV. The trail to 'El Salto Waterfall' is at its best. We suggest bringing a rain jacket or a change of clothes, as the experience will be intense and direct. Crank up the music volume and conquer the mud!",
+                atv_sonido_Clear: "☀️ <b>Perfect Day to Explore.</b> Clear skies over Mazamitla. Enjoy the total freedom of the ATV to navigate obstacles. Connect your favorite playlist to the sound system and feel the mountain breeze.",
+                rzr_racer_Rain: "🌧️ <b>Mud-Proof Power.</b> The rain puts the Rzr's 4x4 traction to the test. Challenging trails like 'Barranca Verde' become a thrilling, extreme experience. You have the ideal structure and stability to push forward safely through slippery terrain.",
+                rzr_racer_Clear: "☀️ <b>Speed and Scenery.</b> Great visibility to unleash the Rzr's horsepower. Perfect for long routes to the highest viewpoints. Smooth, stable driving, ideal for enjoying panoramic views in total comfort."
+            }
+        };
+
+        // ==================== DATOS DE RUTAS ====================
+        const ROUTES_DATA = [
+            { id: "sierra-tigre", title: "Sierra del Tigre", duration: "1 Hora", category: "Estándar", distance: "12 km", difficulty: "Baja-Media", isExclusive: false, isVip: false, pois: ["Mirador de la Sierra", "Senderos del Tigre"], description: "Una inmersión perfecta y rápida por los senderos altos de Mazamitla con espectaculares panorámicas.", popularity: 88, price: 800, image: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=600" },
+            { id: "malecon-presa", title: 'Malecón "Presa" Valle de Juárez', duration: "2 Horas", category: "Estándar", distance: "24 km", difficulty: "Media", isExclusive: false, isVip: false, pois: ["Mirador Sierra del Tigre", "Valle de Juárez", "Malecón de la Presa"], description: "Excelente recorrido combinado que te lleva desde el denso bosque hasta el espejo de agua de la presa de Valle de Juárez.", popularity: 94, price: 1600, image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=600" },
+            { id: "hacienda-abandonada", title: "Hacienda Abandonada", duration: "1 Hora", category: "Estándar", distance: "14 km", difficulty: "Baja", isExclusive: false, isVip: false, pois: ["Mirador Corazón de la Aguacatera", "Casco de la Hacienda Vieja"], description: "Viaje histórico de exploración fotográfica por ruinas coloniales rodeadas de un asombroso cultivo ecológico.", popularity: 81, price: 800, image: "https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?q=80&w=600" },
+            { id: "cascada-salto", title: "Cascada el Salto", duration: "2 Horas", category: "Estándar", distance: "20 km", difficulty: "Media", isExclusive: false, isVip: false, pois: ["Sendero de Aguas Bravas", "Mirador La Roca", "Cascada El Salto"], description: "Ruta húmeda clásica de Mazamitla, cruzando arroyos de montaña hasta el imponente salto de agua natural.", popularity: 96, price: 1600, image: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?q=80&w=600" },
+            { id: "dos-aguas", title: "Mirador Dos Aguas", duration: "1 Hora", category: "Estándar", distance: "11 km", difficulty: "Baja-Media", isExclusive: false, isVip: false, pois: ["Mirador Natural Dos Aguas", "Cruce de Arroyos"], description: "La frescura de dos caudales de montaña convergiendo en un mirador imponente rodeado de pinos gigantes.", popularity: 85, price: 800, image: "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?q=80&w=600" },
+            { id: "barranca-verde", title: "Barranca Verde", duration: "2 Horas", category: "Exclusiva de MAZAVENTURA", distance: "Fijada por Duración", difficulty: "Alta (Solo Pilotos con Experiencia)", isExclusive: true, isVip: false, pois: [], description: "⚠️ RUTA EXCLUSIVA: Diseñada únicamente para conductores con experiencia. Caminos sumamente irregulares, demandantes y ajetreados por desfiladeros salvajes.", popularity: 90, price: 1600, image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=600" },
+            { id: "camino-real", title: "CAMINO REAL DEL TIGRE", duration: "3 Horas", category: "VIP", distance: "38 km", difficulty: "Alta", isExclusive: false, isVip: true, pois: ["Ruta Ancestral de los Tigres", "Mirador Divisadero", "Paso de las Rocas"], description: "Expedición VIP de larga duración. Recorre caminos ancestrales de carretas, cruzando los límites más remotos de la sierra.", popularity: 98, price: 2400, image: "https://images.unsplash.com/photo-1501854140801-50d01698950b?q=80&w=600" },
+            { id: "puerta-cielo", title: 'Mirador "Puerta del Cielo"', duration: "3 Horas", category: "VIP", distance: "35 km", difficulty: "Media-Alta", isExclusive: false, isVip: true, pois: ["Mirador Divino", "Punto Más Alto 2200msnm", 'Cantina "La Chuta Parada Obligatoria" (2065msnm)'], description: "Viaje de lujo directo a las nubes. Incluye parada obligatoria en la famosa Cantina La Chuta para hidratación.", popularity: 99, price: 2400, image: "https://images.unsplash.com/photo-1472214222541-d510753a4707?q=80&w=600" }
+        ];
+
+        // ==================== VALIDADORES MEJORADOS ====================
+        const Validators = {
+            email: (email) => {
+                const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                return regex.test(String(email).toLowerCase()) && email.length <= 255;
+            },
+            phone: (phone) => {
+                const cleaned = phone.trim().replace(/\D/g, '');
+                return cleaned.length >= 10 && cleaned.length <= 15;
+            },
+            routeId: (id) => ROUTES_DATA.some(r => r.id === id),
+            vehicleId: (id) => ['atv_sonido', 'rzr_racer'].includes(id)
+        };
+
+        // ==================== FUNCIONES METEOROLÓGICAS ====================
+        async function actualizarClimaYScout() {
+            try {
+                const params = new URLSearchParams({
+                    lat: CONFIG.WEATHER_COORDS.lat,
+                    lon: CONFIG.WEATHER_COORDS.lon,
+                    appid: 'e8a1832f5fb2b8e50b8be10e79b31f6b',
+                    units: 'metric'
+                });
+
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), CONFIG.WEATHER_TIMEOUT);
+
+                const response = await fetch(`${CONFIG.WEATHER_API_URL}?${params}`, { signal: controller.signal });
+                clearTimeout(timeoutId);
+
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
+                const data = await response.json();
+                estadoAventura.climaActual = data.weather?.[0]?.main === "Rain" ? "Rain" : "Clear";
+            } catch (error) {
+                console.warn("Clima no disponible, usando por defecto:", error.message);
+                estadoAventura.climaActual = "Clear";
+            }
+            
+            generarRecomendacionScout();
+        }
+
+        function seleccionarVehiculo(idVehiculo) {
+            if (!Validators.vehicleId(idVehiculo)) {
+                console.warn(`Vehículo inválido: ${idVehiculo}`);
+                return;
+            }
+            
+            estadoAventura.vehiculoSeleccionado = idVehiculo;
+            
+            // Actualizar selección visual
+            document.querySelectorAll('.vehicle-card').forEach(card => {
+                card.classList.remove('selected');
+                card.setAttribute('aria-selected', 'false');
+            });
+            
+            const selected = document.getElementById(`vehicle-${idVehiculo}`);
+            if (selected) {
+                selected.classList.add('selected');
+                selected.setAttribute('aria-selected', 'true');
+            }
+            
+            generarRecomendacionScout();
+        }
+
+        function generarRecomendacionScout() {
+            const scoutBox = document.getElementById("ai-scout-output");
+            if (!scoutBox) return;
+            
+            const idioma = localStorage.getItem("preferred_lang") || app.lang || "es";
+            const llaveConfig = `${estadoAventura.vehiculoSeleccionado}_${estadoAventura.climaActual}`;
+            const textoRecomendacion = recomendacionesIA[idioma]?.[llaveConfig] || "Cargando recomendación...";
+            
+            // Cambiar el diseño según el clima
+            if (estadoAventura.climaActual === "Rain") {
+                scoutBox.className = "p-4 bg-blue-950/60 border border-blue-500 text-blue-200 rounded-lg shadow-inner";
+            } else {
+                scoutBox.className = "p-4 bg-amber-950/40 border border-amber-500/70 text-amber-100 rounded-lg shadow-inner";
+            }
+            
+            scoutBox.innerHTML = textoRecomendacion;
+        }
+
+        // ==================== APLICACIÓN PRINCIPAL ====================
+        const app = {
+            lang: localStorage.getItem("preferred_lang") || 'es',
+            state: {
+                currentView: "home",
+                selectedRoute: null,
+                adminTab: "dashboard",
+                searchQuery: "",
+                mapInstance: null,
+                notifications: [
+                    { id: 1, type: "Reserva", details: "Nueva Reserva: Ruta Cascada el Salto", date: "26 de Mayo, 11:00 AM", status: "Activo" },
+                    { id: 2, type: "Soporte", details: "Solicitud de Itinerario Personalizado", date: "26 de Mayo, 10:45 AM", status: "Atendido" },
+                    { id: 3, type: "Alerta", details: "Baja disponibilidad en Ruta VIP Camino Real", date: "26 de Mayo, 09:30 AM", status: "Crítico" }
+                ],
+                reviews: [
+                    { id: 1, author: "Carlos Medina", route: "Barranca Verde", rating: 5, text: "Excelente dificultad técnica, el RZR 1000 se comportó increíble.", status: "Pendiente" },
+                    { id: 2, author: "Sofía Martínez", route: "Cascada el Salto", rating: 2, text: "El paisaje es hermoso, pero tuvimos que esperar 15 minutos en el punto de salida.", status: "Urgente" }
+                ]
+            },
+
+            setLang(lang) {
+                if (!['es', 'en'].includes(lang)) return;
+                this.lang = lang;
+                localStorage.setItem("preferred_lang", lang);
+                this.render();
+                generarRecomendacionScout();
+            },
+
+            navigate(viewId) {
+                const validViews = ['home', 'routes', 'admin'];
+                if (!validViews.includes(viewId)) {
+                    console.warn(`Vista inválida: ${viewId}`);
+                    return;
+                }
+                this.state.currentView = viewId;
+                this.render();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            },
+
+            render() {
+                const container = document.getElementById("view-container");
+                if (!container) {
+                    console.error("Container no encontrado");
+                    return;
+                }
+
+                const viewMap = {
+                    home: () => this.renderHome(container),
+                    routes: () => this.renderRoutes(container),
+                    admin: () => this.renderAdmin(container)
+                };
+
+                try {
+                    const renderer = viewMap[this.state.currentView];
+                    if (renderer) {
+                        renderer();
+                    }
+                } catch (error) {
+                    console.error(`Error al renderizar vista:`, error);
+                    container.innerHTML = '<div class="glass-panel p-6 rounded-xl text-red-400"><p>Error al cargar la vista. Por favor, recarga la página.</p></div>';
+                }
+            },
+
+            renderHome(container) {
+                const topRoutes = ROUTES_DATA.filter(r => r.popularity >= 90).slice(0, 3);
+                container.innerHTML = `
+                    <div class="fade-in space-y-16">
+                        <div class="text-center py-12">
+                            <h1 class="hero-title text-5xl md:text-7xl font-extrabold tracking-tight mb-6 bg-clip-text text-transparent bg-gradient-to-r from-white via-purple-200 to-purple-400">DOMINA EL BOSQUE</h1>
+                            <p class="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto leading-relaxed mb-8">Planificamos expediciones premium en Mazamitla combinando el rugido de los RZR con el conocimiento inteligente de nuestra IA Scout.</p>
+                            <div class="flex flex-wrap justify-center gap-4">
+                                <button onclick="app.navigate('routes')" class="btn-orchid px-8 py-4 rounded-xl text-base shadow-lg shadow-purple-500/20">Ver Catálogo Completo</button>
+                                <button onclick="app.triggerScarcity()" class="glass-panel hover:bg-white/10 text-white px-8 py-4 rounded-xl font-bold text-base transition">Explorar Rutas Populares</button>
+                            </div>
+                        </div>
+                        <div class="grid md:grid-cols-3 gap-8">
+                            ${topRoutes.map(route => this.routeCard(route)).join('')}
+                        </div>
+                    </div>
+                `;
+                actualizarClimaYScout();
+            },
+
+            renderRoutes(container) {
+                container.innerHTML = `
+                    <div class="fade-in space-y-16">
+                        <div class="text-center max-w-2xl mx-auto">
+                            <h1 class="text-4xl font-extrabold text-white mb-2">Expediciones Premium</h1>
+                            <p class="text-gray-400">Selecciona tu vehículo y descubre recomendaciones personalizadas según el clima.</p>
+                        </div>
+
+                        <div class="max-w-4xl mx-auto">
+                            <h3 class="text-xl font-bold text-white mb-4">🚗 Selecciona tu Vehículo</h3>
+                            <div class="grid md:grid-cols-2 gap-6 mb-8" role="group" aria-label="Selección de vehículos">
+                                <div id="vehicle-atv_sonido" class="vehicle-card glass-panel p-6 rounded-2xl border-2 border-transparent hover:border-purple-500 selected" onclick="seleccionarVehiculo('atv_sonido')" role="option" aria-selected="true" tabindex="0">
+                                    <h4 class="text-lg font-bold text-white mb-2">🏍️ Cuatrimoto (ATV Sound)</h4>
+                                    <p class="text-sm text-gray-300">Maniobrabilidad extrema. Equipo de sonido integrado. Ideal para pilotos ágiles.</p>
+                                </div>
+                                <div id="vehicle-rzr_racer" class="vehicle-card glass-panel p-6 rounded-2xl border-2 border-transparent hover:border-purple-500" onclick="seleccionarVehiculo('rzr_racer')" role="option" aria-selected="false" tabindex="0">
+                                    <h4 class="text-lg font-bold text-white mb-2">🏁 RZR Racer</h4>
+                                    <p class="text-sm text-gray-300">Potencia 4x4. Tracción extrema. Diseñado para terrenos demandantes.</p>
+                                </div>
+                            </div>
+
+                            <div id="ai-scout-output" class="p-4 bg-amber-950/40 border border-amber-500/70 text-amber-100 rounded-lg shadow-inner mb-8" role="region" aria-live="polite" aria-label="Recomendación del AI Scout">
+                                Cargando recomendación del IA Scout...
+                            </div>
+                        </div>
+
+                        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            ${ROUTES_DATA.map(route => this.routeGridCard(route)).join('')}
+                        </div>
+                        ${this.aiScoutWidget()}
+                        ${this.checkoutSection()}
+                        ${this.mapSection()}
+                    </div>
+                `;
+                setTimeout(() => {
+                    this.initializeMap();
+                    actualizarClimaYScout();
+                }, 100);
+            },
+
+            routeCard(route) {
+                return `
+                    <div class="glass-panel rounded-2xl overflow-hidden flex flex-col h-full group hover:border-purple-500/50 transition duration-300">
+                        <div class="h-48 bg-gray-900 relative overflow-hidden">
+                            <img src="${route.image}" alt="${route.title}" class="w-full h-full object-cover opacity-80 group-hover:scale-105 transition duration-500" loading="lazy">
+                            <div class="absolute top-3 right-3 bg-black/70 backdrop-blur-md text-[11px] font-bold py-1 px-2.5 rounded-full flex items-center gap-1">
+                                <span class="text-yellow-400">★</span> ${route.popularity}%
+                            </div>
+                        </div>
+                        <div class="p-6 flex-grow flex flex-col justify-between">
+                            <div>
+                                <h3 class="text-xl font-bold mb-1 group-hover:text-purple-300 transition">${route.title}</h3>
+                                <p class="text-xs text-purple-400 font-bold mb-4">${route.duration} | ${route.category}</p>
+                                <p class="text-gray-300 text-sm mb-6 line-clamp-3">${route.description}</p>
+                            </div>
+                            <button onclick="app.selectRoute('${route.id}')" class="w-full btn-orchid py-3 rounded-xl text-sm tracking-wide">Seleccionar Ruta</button>
+                        </div>
+                    </div>
+                `;
+            },
+
+            routeGridCard(route) {
+                const badgeClass = route.isVip ? 'border-b-4 border-yellow-500' : route.isExclusive ? 'border-b-4 border-purple-600' : '';
+                return `
+                    <div class="glass-panel rounded-2xl overflow-hidden flex flex-col h-full justify-between relative group ${badgeClass}">
+                        ${route.isVip ? '<div class="absolute top-0 right-0 vip-gradient text-xs font-black px-3 py-1 rounded-bl-lg">VIP 3H</div>' : ''}
+                        ${route.isExclusive ? '<div class="absolute top-0 left-0 bg-purple-700 text-white text-[9px] font-extrabold px-2.5 py-1 rounded-br-lg tracking-wider uppercase">EXCLUSIVA</div>' : ''}
+                        <div>
+                            <div class="h-40 bg-gray-950 relative overflow-hidden">
+                                <img src="${route.image}" alt="${route.title}" class="w-full h-full object-cover opacity-70 group-hover:scale-105 transition duration-500" loading="lazy">
+                                <div class="absolute bottom-2 right-2 bg-black/80 px-2 py-0.5 rounded text-[10px] text-gray-300">${route.difficulty}</div>
+                            </div>
+                            <div class="p-5">
+                                <h3 class="text-lg font-bold mb-1 leading-snug group-hover:text-purple-300 transition">${route.title}</h3>
+                                <div class="flex justify-between items-center text-xs text-gray-400 mb-4">
+                                    <span>${route.duration}</span>
+                                    <span>${route.distance}</span>
+                                </div>
+                                ${route.pois.length > 0 ? `<div class="bg-black/30 p-3 rounded-lg mb-4"><p class="text-[10px] uppercase text-gray-400 font-bold tracking-wider mb-1.5">POIs:</p><ul class="text-xs space-y-1 text-gray-300">${route.pois.map(p => `<li>• ${p}</li>`).join('')}</ul></div>` : `<div class="bg-purple-950/20 border border-purple-500/20 p-3 rounded-lg mb-4 text-center"><p class="text-[10px] uppercase text-purple-300 font-bold">Secretos del Bosque</p><p class="text-xs text-purple-200 mt-1 italic">POIs guardados para la aventura</p></div>`}
+                                <p class="text-gray-300 text-xs line-clamp-3 leading-relaxed">${route.description}</p>
+                            </div>
+                        </div>
+                        <div class="p-5 pt-0">
+                            <button onclick="app.selectRoute('${route.id}')" class="w-full btn-orchid py-2.5 rounded-xl text-xs tracking-wide">Seleccionar</button>
+                        </div>
+                    </div>
+                `;
+            },
+
+            aiScoutWidget() {
+                return `
+                    <div id="ai-scout-anchor" class="hidden max-w-3xl mx-auto p-8 bg-gradient-to-br from-gray-900 to-gray-800 text-white rounded-3xl shadow-2xl border border-purple-500/30 slide-in relative overflow-hidden">
+                        <div class="absolute -top-10 -right-10 text-gray-800 font-black text-9xl pointer-events-none select-none opacity-10">AI</div>
+                        <h2 class="text-3xl font-extrabold tracking-tight flex items-center gap-2 mb-2 relative z-10"><span class="text-orchid">✦</span> Mazaventura AI Scout</h2>
+                        <p class="text-gray-400 mb-6 text-sm relative z-10" id="ai-prompt">Selecciona una ruta para análisis personalizado.</p>
+                        <div class="space-y-6 relative z-10">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-300 uppercase tracking-wider mb-2" for="ai-pace-select">Ritmo de Expedición:</label>
+                                <select id="ai-pace-select" class="w-full p-4 bg-gray-950 border border-purple-500/30 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 outline-none font-semibold text-white">
+                                    <option value="calm">Ritmo Calmo (Paisajes & Fotografía)</option>
+                                    <option value="dynamic">Ritmo Dinámico (Terrenos combinados)</option>
+                                    <option value="technical">Expedición Técnica (Pilotos experimentados)</option>
+                                </select>
+                            </div>
+                            <button onclick="app.generateCheckout()" class="w-full btn-orchid text-white font-extrabold text-base py-4 rounded-xl shadow-lg">GENERAR ITINERARIO Y CHECKOUT</button>
+                        </div>
+                    </div>
+                `;
+            },
+
+            checkoutSection() {
+                return `
+                    <div id="checkout-anchor" class="hidden max-w-xl mx-auto p-8 glass-panel rounded-3xl border border-purple-500/30 shadow-[0_0_50px_rgba(186,85,211,0.15)] slide-in">
+                        <h2 class="text-2xl font-bold mb-6 text-white flex items-center gap-2">
+                            <svg class="w-6 h-6 text-orchid" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2 9m10-9l2 9m-9 0h14"></path>
+                            </svg>
+                            Checkout de Expedición
+                        </h2>
+                        <div class="bg-black/40 p-6 rounded-2xl space-y-4 mb-6 text-sm">
+                            <div class="flex justify-between border-b border-white/5 pb-2">
+                                <span class="text-gray-400">Ruta:</span>
+                                <span class="font-bold text-white" id="chk-title">---</span>
+                            </div>
+                            <div class="flex justify-between border-b border-white/5 pb-2">
+                                <span class="text-gray-400">Duración:</span>
+                                <span class="font-bold text-white" id="chk-duration">---</span>
+                            </div>
+                            <div class="flex justify-between border-b border-white/5 pb-2">
+                                <span class="text-gray-400">Ritmo:</span>
+                                <span class="font-bold text-purple-300" id="chk-pace">---</span>
+                            </div>
+                            <div class="flex justify-between pt-2 text-xl font-extrabold">
+                                <span>Total:</span>
+                                <span class="text-yellow-400" id="chk-price">$0 MXN</span>
+                            </div>
+                        </div>
+                        <button onclick="app.processPayment()" class="w-full bg-green-500 hover:bg-green-400 text-black font-extrabold py-4 rounded-xl shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed">CONFIRMAR Y PAGAR</button>
+                        <div id="boarding-pass" class="hidden mt-8 bg-white text-gray-900 p-6 rounded-2xl shadow-xl border-t-8 border-green-500 slide-in text-center">
+                            <h3 class="font-extrabold text-lg tracking-wider mb-1 uppercase">Pase de Abordar</h3>
+                            <p class="text-xs text-gray-400 mb-4">Garantía Mazaventura 2.0</p>
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=MazaventuraReservation" alt="QR Code" class="mx-auto rounded-lg mb-4 border border-gray-300" loading="lazy">
+                            <p class="text-xs font-bold text-gray-500">Preséntate 15 minutos antes en nuestro establecimiento.</p>
+                        </div>
+                    </div>
+                `;
+            },
+
+            mapSection() {
+                return `<div class="mt-16"><h2 class="text-2xl font-bold mb-4">Mapa de Expedición (Cartografía Premium)</h2><div id="map" class="h-80 w-full rounded-2xl border border-gray-800"></div></div>`;
+            },
+
+            selectRoute(routeId) {
+                if (!Validators.routeId(routeId)) {
+                    console.warn(`ID de ruta inválido: ${routeId}`);
+                    return;
+                }
+                this.state.selectedRoute = ROUTES_DATA.find(r => r.id === routeId);
+                this.state.currentView = 'routes';
+                this.render();
+                setTimeout(() => {
+                    const scout = document.getElementById('ai-scout-anchor');
+                    if (scout) {
+                        scout.classList.remove('hidden');
+                        document.getElementById('ai-prompt').innerHTML = `He detectado tu interés en <strong class="text-orchid">${this.state.selectedRoute.title}</strong> (${this.state.selectedRoute.duration}). Ajustaré el itinerario según tu nivel.`;
+                        scout.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }, 100);
+            },
+
+            generateCheckout() {
+                if (!this.state.selectedRoute) {
+                    this.showModal("Error", "Por favor selecciona una ruta primero.");
+                    return;
+                }
+                const paceSelect = document.getElementById('ai-pace-select');
+                if (!paceSelect) return;
+                const paceText = paceSelect.options[paceSelect.selectedIndex].text;
+                document.getElementById('chk-title').textContent = this.state.selectedRoute.title;
+                document.getElementById('chk-duration').textContent = this.state.selectedRoute.duration;
+                document.getElementById('chk-pace').textContent = paceText;
+                document.getElementById('chk-price').textContent = `$${this.state.selectedRoute.price.toLocaleString()} MXN`;
+                const checkout = document.getElementById('checkout-anchor');
+                if (checkout) {
+                    checkout.classList.remove('hidden');
+                    document.getElementById('boarding-pass').classList.add('hidden');
+                    setTimeout(() => checkout.scrollIntoView({ behavior: 'smooth', block: 'center' }), 150);
+                }
+            },
+
+            processPayment() {
+                if (!this.state.selectedRoute) return;
+                const bp = document.getElementById('boarding-pass');
+                if (bp) bp.classList.remove('hidden');
+                this.state.notifications.unshift({
+                    id: Date.now(),
+                    type: "Venta",
+                    details: `Venta Confirmada: ${this.state.selectedRoute.title}`,
+                    date: new Date().toLocaleString('es-MX'),
+                    status: "Completado"
+                });
+                this.showModal("Expedición Asegurada", "Tu pago ha sido procesado de manera segura. Presenta el Pase de Abordar QR al llegar.");
+                setTimeout(() => {
+                    if (bp) bp.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 150);
+            },
+
+            initializeMap() {
+                if (this.state.mapInstance) return;
+                const mapElement = document.getElementById('map');
+                if (!mapElement) return;
+                try {
+                    this.state.mapInstance = L.map('map').setView([CONFIG.WEATHER_COORDS.lat, CONFIG.WEATHER_COORDS.lon], CONFIG.MAP_ZOOM);
+                    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { 
+                        attribution: '&copy; CartoDB', 
+                        maxZoom: 19 
+                    }).addTo(this.state.mapInstance);
+                    L.marker([CONFIG.WEATHER_COORDS.lat, CONFIG.WEATHER_COORDS.lon])
+                        .addTo(this.state.mapInstance)
+                        .bindPopup("<b>Base Mazaventura</b><br>Inicio y fin de expediciones");
+                } catch (error) {
+                    console.error("Error al inicializar mapa:", error);
+                }
+            },
+
+            renderAdmin(container) {
+                container.innerHTML = `
+                    <div class="fade-in space-y-10">
+                        <div><h1 class="text-3xl font-extrabold text-white">Centro de Comando</h1><p class="text-gray-400 text-sm mt-1">Gestiona reputación, conversiones y auditoría.</p></div>
+                        <div class="flex gap-4 border-b border-white/10 mb-6 overflow-x-auto" role="tablist">
+                            <button role="tab" aria-selected="${this.state.adminTab === 'dashboard'}" onclick="app.switchAdminTab('dashboard')" class="pb-3 text-sm font-bold border-b-2 transition whitespace-nowrap ${this.state.adminTab === 'dashboard' ? 'border-purple-500 text-white' : 'border-transparent text-gray-400'}">Dashboard</button>
+                            <button role="tab" aria-selected="${this.state.adminTab === 'reviews'}" onclick="app.switchAdminTab('reviews')" class="pb-3 text-sm font-bold border-b-2 transition whitespace-nowrap ${this.state.adminTab === 'reviews' ? 'border-purple-500 text-white' : 'border-transparent text-gray-400'}">Reseñas</button>
+                            <button role="tab" aria-selected="${this.state.adminTab === 'forms'}" onclick="app.switchAdminTab('forms')" class="pb-3 text-sm font-bold border-b-2 transition whitespace-nowrap ${this.state.adminTab === 'forms' ? 'border-purple-500 text-white' : 'border-transparent text-gray-400'}">Formularios</button>
+                        </div>
+                        <div id="admin-content"></div>
+                    </div>
+                `;
+                this.renderAdminTab();
+            },
+
+            switchAdminTab(tabId) {
+                const validTabs = ['dashboard', 'reviews', 'forms'];
+                if (!validTabs.includes(tabId)) return;
+                this.state.adminTab = tabId;
+                this.renderAdminTab();
+            },
+
+            renderAdminTab() {
+                const content = document.getElementById('admin-content');
+                if (!content) return;
+                const tabMap = {
+                    dashboard: () => this.adminDashboard(),
+                    reviews: () => this.adminReviews(),
+                    forms: () => this.adminForms()
+                };
+                const renderer = tabMap[this.state.adminTab];
+                if (renderer) content.innerHTML = renderer();
+            },
+
+            adminDashboard() {
+                return `<div class="grid md:grid-cols-2 gap-8 slide-in"><div class="glass-panel p-6 rounded-2xl"><h3 class="text-lg font-bold mb-4">Métricas por Rutas (Mensual)</h3><div class="space-y-6">${ROUTES_DATA.map(r => `<div><div class="flex justify-between text-xs mb-1"><span class="font-bold">${r.title} ${r.isVip ? '<span class="text-gold text-[10px] ml-1">[VIP]</span>' : ''}</span><span class="text-gray-400 font-semibold">${Math.round(r.popularity * 0.4)} Reservas</span></div><div class="w-full bg-white/5 h-2.5 rounded-full overflow-hidden"><div class="h-full rounded-full ${r.isVip ? 'bg-yellow-500' : 'bg-purple-500'}" style="width: ${r.popularity}%"></div></div></div>`).join('')}</div></div><div class="glass-panel p-6 rounded-2xl"><h3 class="text-lg font-bold mb-4">Estrategias Activas</h3><div class="space-y-4"><div class="bg-purple-950/20 border border-purple-500/20 p-4 rounded-xl flex gap-3"><div class="text-2xl">📈</div><div><h4 class="font-bold text-sm text-purple-200">Prueba Social</h4><p class="text-xs text-gray-400 mt-0.5">Inyección dinámica de preferencia para conversiones.</p></div></div><div class="bg-yellow-950/20 border border-yellow-500/20 p-4 rounded-xl flex gap-3"><div class="text-2xl">⚡</div><div><h4 class="font-bold text-sm text-yellow-200">Trigger de Escasez</h4><p class="text-xs text-gray-400 mt-0.5">Alertas automáticas para disponibilidad baja.</p></div></div><button onclick="app.triggerScarcity()" class="w-full btn-orchid py-2.5 rounded-xl text-xs mt-4">PROBAR NOTIFICACIÓN</button></div></div></div>`;
+            },
+
+            adminReviews() {
+                return `<div class="glass-panel p-6 rounded-2xl slide-in space-y-6"><div><h3 class="text-lg font-bold">Gestión de Reseñas</h3><p class="text-xs text-gray-400">Automatiza respuestas a críticas negativas.</p></div><div class="space-y-4">${this.state.reviews.map(review => `<div class="bg-black/30 p-5 rounded-xl border-l-4 ${review.rating <= 3 ? 'border-red-500' : 'border-green-500'} flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"><div><div class="flex items-center gap-2 flex-wrap"><span class="font-bold text-sm text-white">${review.author}</span><span class="text-xs text-gray-400">(${review.route})</span><span class="text-xs ${review.rating <= 3 ? 'bg-red-500/10 text-red-400' : 'bg-green-500/10 text-green-400'} px-2 py-0.5 rounded-full font-bold">${review.rating} ★</span></div><p class="text-xs italic text-gray-300 mt-1">"${review.text}"</p></div><div class="flex gap-2 w-full sm:w-auto"><button onclick="app.replyReview(${review.id}, 'refund')" class="flex-1 sm:flex-initial bg-red-500/10 text-red-400 hover:bg-red-500/20 text-[11px] font-bold px-3 py-1.5 rounded transition">Reembolso</button><button onclick="app.replyReview(${review.id}, 'apology')" class="flex-1 sm:flex-initial bg-gray-700 hover:bg-gray-600 text-[11px] font-bold px-3 py-1.5 rounded transition">Responder</button></div></div>`).join('')}</div></div>`;
+            },
+
+            adminForms() {
+                return `<div class="grid md:grid-cols-2 gap-8 slide-in"><div class="glass-panel p-6 rounded-2xl"><h3 class="text-lg font-bold mb-1">Registrar Operador</h3><p class="text-xs text-gray-400 mb-6">Validación estricta de datos.</p><form onsubmit="app.registerOperator(event)" class="space-y-4" novalidate><div><label class="block text-xs font-bold text-gray-400 uppercase mb-1" for="reg-email">Email:</label><input type="email" id="reg-email" placeholder="ejemplo@mazaventura.com" class="w-full p-3 rounded-lg glass-input text-sm" required><span id="err-email" class="text-[11px] text-red-400 mt-1 hidden" role="alert"></span></div><div><label class="block text-xs font-bold text-gray-400 uppercase mb-1" for="reg-phone">Teléfono:</label><input type="tel" id="reg-phone" placeholder="10-15 dígitos" class="w-full p-3 rounded-lg glass-input text-sm" required><span id="err-phone" class="text-[11px] text-red-400 mt-1 hidden" role="alert"></span></div><button type="submit" class="w-full btn-orchid py-3 text-sm rounded-xl">REGISTRAR</button></form></div><div class="glass-panel p-6 rounded-2xl flex flex-col justify-between"><div><div class="flex justify-between items-center mb-4 gap-2"><h3 class="text-lg font-bold">Auditoría</h3><input type="text" oninput="app.searchNotifications(this.value)" placeholder="Buscar..." class="p-1.5 rounded-lg glass-input text-xs w-32" aria-label="Buscar notificaciones"></div><div class="overflow-y-auto max-h-96 space-y-2 pr-2" id="audit-log" role="log"></div></div></div></div>`;
+            },
+
+            registerOperator(e) {
+                e.preventDefault();
+                const email = document.getElementById('reg-email')?.value || '';
+                const phone = document.getElementById('reg-phone')?.value || '';
+                const errEmail = document.getElementById('err-email');
+                const errPhone = document.getElementById('err-phone');
+
+                if (!errEmail || !errPhone) {
+                    console.error("Elementos de error no encontrados");
+                    return;
+                }
+
+                // Limpiar errores previos
+                errEmail.classList.add('hidden');
+                errPhone.classList.add('hidden');
+                document.getElementById('reg-email')?.classList.remove('error');
+                document.getElementById('reg-phone')?.classList.remove('error');
+
+                let isValid = true;
+
+                if (!Validators.email(email)) {
+                    errEmail.textContent = 'Email inválido o demasiado largo';
+                    errEmail.classList.remove('hidden');
+                    document.getElementById('reg-email')?.classList.add('error');
+                    isValid = false;
+                }
+
+                if (!Validators.phone(phone)) {
+                    errPhone.textContent = 'Teléfono: 10-15 dígitos requeridos';
+                    errPhone.classList.remove('hidden');
+                    document.getElementById('reg-phone')?.classList.add('error');
+                    isValid = false;
+                }
+
+                if (isValid) {
+                    this.state.notifications.unshift({
+                        id: Date.now(),
+                        type: "Auditoría",
+                        details: `Nuevo Operador: ${email}`,
+                        date: new Date().toLocaleString('es-MX'),
+                        status: "Éxito"
+                    });
+                    this.showModal("Éxito", `Operador ${email} registrado correctamente.`);
+                    e.target.reset();
+                    this.renderAuditLog();
+                }
+            },
+
+            searchNotifications(query) {
+                this.state.searchQuery = query.toLowerCase();
+                this.renderAuditLog();
+            },
+
+            renderAuditLog() {
+                const log = document.getElementById('audit-log');
+                if (!log) return;
+                const filtered = this.state.notifications.filter(n =>
+                    n.type.toLowerCase().includes(this.state.searchQuery) ||
+                    n.details.toLowerCase().includes(this.state.searchQuery)
+                );
+                log.innerHTML = filtered.length === 0
+                    ? '<p class="text-xs text-gray-500 text-center py-4">Sin registros</p>'
+                    : filtered.map(n => `<div class="p-3 bg-black/20 rounded-lg text-xs flex justify-between items-start border-l-2 ${n.type === 'Venta' ? 'border-green-500' : 'border-purple-400'}"><div><div class="flex items-center gap-1.5 font-bold text-white mb-0.5"><span>[${n.type}]</span><span class="text-[10px] text-gray-400">${n.date}</span></div><p class="text-gray-300">${n.details}</p></div><span class="text-[9px] bg-white/5 px-2 py-0.5 rounded text-gray-400 font-bold uppercase">${n.status}</span></div>`).join('');
+            },
+
+            replyReview(reviewId, type) {
+                const review = this.state.reviews.find(r => r.id === reviewId);
+                if (!review) {
+                    console.warn(`Reseña no encontrada: ${reviewId}`);
+                    return;
+                }
+                const replies = {
+                    refund: `Respuesta a ${review.author}: Lamentamos tu insatisfacción. Procesaremos un plus para tu próxima aventura.`,
+                    apology: `Respuesta a ${review.author}: Agradecemos tu retroalimentación. Mejoraremos nuestros servicios.`
+                };
+                review.status = "Atendido";
+                this.state.notifications.unshift({
+                    id: Date.now(),
+                    type: "Mitigación",
+                    details: `Se respondió a ${review.author}`,
+                    date: new Date().toLocaleString('es-MX'),
+                    status: "Completado"
+                });
+                this.showModal("Respuesta Enviada", replies[type]);
+                this.renderAdminTab();
+            },
+
+            triggerScarcity() {
+                const notifCenter = document.getElementById('notification-center');
+                if (!notifCenter) return;
+                const alertId = Date.now();
+                const html = `
+                    <div id="alert-${alertId}" class="glass-panel p-4 rounded-xl border border-purple-500 shadow-2xl slide-in cursor-pointer hover:bg-white/5 transition pointer-events-auto" onclick="app.selectRoute('barranca-verde')" role="button" tabindex="0" aria-label="Alerta de disponibilidad crítica">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 class="font-bold text-sm text-purple-300">⚠️ Disponibilidad Crítica</h4>
+                                <p class="text-xs text-gray-300 mt-1">Última plaza en <strong class="text-white">Barranca Verde</strong> hoy.</p>
+                            </div>
+                            <span class="bg-purple-600 text-white text-[10px] font-bold px-2 py-0.5 rounded ml-3">ASEGURAR</span>
+                        </div>
+                    </div>
+                `;
+                notifCenter.insertAdjacentHTML('beforeend', html);
+                setTimeout(() => {
+                    const el = document.getElementById(`alert-${alertId}`);
+                    if (el) el.remove();
+                }, CONFIG.SCARCITY_DURATION);
+            },
+
+            showModal(title, desc) {
+                const titleEl = document.getElementById('modal-title');
+                const descEl = document.getElementById('modal-desc');
+                const modal = document.getElementById('custom-modal');
+
+                if (!titleEl || !descEl || !modal) {
+                    console.error("Modal elements no encontrados");
+                    return;
+                }
+                titleEl.textContent = title;
+                descEl.textContent = desc;
+                modal.classList.remove('hidden');
+                modal.setAttribute('aria-hidden', 'false');
+            },
+
+            closeModal() {
+                const modal = document.getElementById('custom-modal');
+                if (modal) {
+                    modal.classList.add('hidden');
+                    modal.setAttribute('aria-hidden', 'true');
+                }
+            }
+        };
+
+        // ==================== INICIALIZACIÓN ====================
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                // Restaurar idioma guardado
+                const savedLang = localStorage.getItem("preferred_lang");
+                if (savedLang) {
+                    app.lang = savedLang;
+                    const langToggle = document.getElementById('langToggle');
+                    if (langToggle) langToggle.value = savedLang;
+                }
+                
+                app.navigate('home');
+                setTimeout(() => app.triggerScarcity(), CONFIG.SCARCITY_DELAY);
+            } catch (error) {
+                console.error("Error al inicializar aplicación:", error);
+            }
+        });
+
+        // Cerrar modal con Escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') app.closeModal();
+        });
+
+        // Agregar navegación con teclado para vehículos
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && e.target.classList.contains('vehicle-card')) {
+                e.target.click();
+            }
+        });
+    </script>
+</body>
+</html>
