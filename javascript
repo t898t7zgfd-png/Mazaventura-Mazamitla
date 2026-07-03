@@ -1,180 +1,189 @@
-// Estado global de la simulación de la app
-let estadoAventura = {
-  climaActual: "Clear", // Por defecto
-  vehiculoSeleccionado: "atv_sonido" // Por defecto empieza en Cuatrimoto
-};
+   <script id="app-js">
+        const DICT = {
+            es: {
+                hero_title: "DOMINA LA SIERRA",
+                hero_desc: "Expediciones premium con equipos Can-Am, asistencia inteligente y rutas exclusivas en Mazamitla.",
+                veh_title: "Selecciona tu Equipo Premium",
+                scout_title: "IA Scout & Clima Actual",
+                scout_waiting: "Selecciona un vehículo para analizar las condiciones de la ruta...",
+                map_title: "Cartografía de Expedición",
+                mp_title: "Pago Seguro QR",
+                mp_selected: "Vehículo seleccionado:",
+                mp_base: "Precio Base:",
+                mp_select_modality: "Selecciona modalidad de pago:",
+                mp_btn_30: "Anticipo 30%",
+                mp_btn_60: "Anticipo 60%",
+                mp_btn_100: "Pago Total (5% DESC)",
+                mp_amount_pay: "Total a cobrar",
+                mp_scan: "Escanea este código QR desde tu App de Mercado Pago para confirmar tu reserva.",
+                discount_text: "¡Descuento 5% aplicado!",
+                select_btn: "Seleccionar Equipo"
+            },
+            en: {
+                hero_title: "CONQUER THE MOUNTAINS",
+                hero_desc: "Premium expeditions with Can-Am vehicles, smart assistance, and exclusive routes in Mazamitla.",
+                veh_title: "Select your Premium Equipment",
+                scout_title: "AI Scout & Current Weather",
+                scout_waiting: "Select a vehicle to analyze route conditions...",
+                map_title: "Expedition Cartography",
+                mp_title: "Secure QR Payment",
+                mp_selected: "Selected vehicle:",
+                mp_base: "Base Price:",
+                mp_select_modality: "Select payment modality:",
+                mp_btn_30: "30% Advance",
+                mp_btn_60: "60% Advance",
+                mp_btn_100: "Full Payment (5% OFF)",
+                mp_amount_pay: "Total to pay",
+                mp_scan: "Scan this QR code from your Mercado Pago App to confirm your booking.",
+                discount_text: "5% Discount applied!",
+                select_btn: "Select Equipment"
+            }
+        };
 
-// Diccionario extendido con las recomendaciones inteligentes bilingües
-const recomendacionesIA = {
-  es: {
-    atv_sonido_Rain: "🌧️ <b>¡Lodo y Adrenalina Pura!</b> El clima lluvioso es perfecto para la interacción todo terreno de la cuatrimoto. La ruta a 'Cascada El Salto' está en su mejor momento. Te sugerimos traer impermeable o ropa de cambio, ya que la experiencia será intensa y directa. ¡Sube el volumen de la música y domina el barro!",
-    atv_sonido_Clear: "☀️ <b>Día Perfecto para Explorar.</b> Cielo despejado en Mazamitla. Disfruta de la total libertad que te da la cuatrimoto para sortear obstáculos. Conecta tu playlist favorita en el equipo de sonido y siente el viento en los caminos de la sierra.",
-    rzr_racer_Rain: "🌧️ <b>Potencia Antilodo.</b> La lluvia pone a prueba la tracción 4x4 del Rzr. Caminos desafiantes como 'Barranca Verde' se vuelven una experiencia extrema y emocionante. Cuentas con la estructura y estabilidad ideales para avanzar con seguridad mientras disfrutas del terreno resbaladizo.",
-    rzr_racer_Clear: "☀️ <b>Velocidad y Paisajes.</b> Excelente visibilidad para exprimir la potencia del Rzr. Ideal para rutas largas hacia los miradores más altos. Conducción suave, estable y perfecta para disfrutar de las vistas panorámicas con total comodidad."
-  },
-  en: {
-    atv_sonido_Rain: "🌧️ <b>Mud and Pure Adrenaline!</b> Rainy weather is perfect for the raw all-terrain interaction of the ATV. The trail to 'El Salto Waterfall' is at its best. We suggest bringing a rain jacket or a change of clothes, as the experience will be intense and direct. Crank up the music volume and conquer the mud!",
-    atv_sonido_Clear: "☀️ <b>Perfect Day to Explore.</b> Clear skies over Mazamitla. Enjoy the total freedom of the ATV to navigate obstacles. Connect your favorite playlist to the sound system and feel the mountain breeze.",
-    rzr_racer_Rain: "🌧️ <b>Mud-Proof Power.</b> The rain puts the Rzr's 4x4 traction to the test. Challenging trails like 'Barranca Verde' become a thrilling, extreme experience. You have the ideal structure and stability to push forward safely through slippery terrain.",
-    rzr_racer_Clear: "☀️ <b>Speed and Scenery.</b> Great visibility to unleash the Rzr's horsepower. Perfect for long routes to the highest viewpoints. Smooth, stable driving, ideal for enjoying panoramic views in total comfort."
-  }
-};
+        const AI_LOGIC = {
+            es: {
+                atv_Clear: "☀️ <b>Día Perfecto.</b> Cielo despejado. Disfruta de la total libertad de la cuatrimoto. Conecta tu playlist al sistema de sonido y siente el viento.",
+                atv_Rain: "🌧️ <b>¡Lodo y Adrenalina Pura!</b> Lluvia detectada. El clima es perfecto para la interacción todo terreno de la cuatrimoto. ¡Sube el volumen y domina el barro!",
+                rzr_Clear: "☀️ <b>Velocidad y Paisajes.</b> Excelente visibilidad. Ideal para exprimir la potencia del Maverick X3 en rutas largas con comodidad suprema.",
+                rzr_Rain: "🌧️ <b>Potencia Antilodo.</b> La lluvia pone a prueba la tracción 4x4 de tu Maverick X3. Caminos como 'Barranca Verde' se vuelven extremos. Avanza con seguridad blindada."
+            },
+            en: {
+                atv_Clear: "☀️ <b>Perfect Day.</b> Clear skies. Enjoy the total freedom of the ATV. Connect your playlist to the sound system and feel the breeze.",
+                atv_Rain: "🌧️ <b>Mud & Adrenaline!</b> Rain detected. Perfect weather for raw all-terrain ATV interaction. Crank up the volume and conquer the mud!",
+                rzr_Clear: "☀️ <b>Speed & Scenery.</b> Great visibility. Unleash the Maverick X3's power on long routes with supreme comfort.",
+                rzr_Rain: "🌧️ <b>Mud-Proof Power.</b> Rain tests the 4x4 traction of your Maverick X3. Trails like 'Barranca Verde' become extreme. Push forward safely."
+            }
+        };
 
-// 1. Obtener clima de la API
-async function actualizarClimaYScout() {
-  const WEATHER_API_URL = "https://api.openweathermap.org/data/2.5/weather?lat=19.9167&lon=-103.0167&appid=TU_API_KEY&units=metric";
-  
-  try {
-    const response = await fetch(WEATHER_API_URL);
-    const data = await response.json();
-    // Simplificamos a 'Rain' o 'Clear' para la demo
-    estadoAventura.climaActual = data.weather[0].main === "Rain" ? "Rain" : "Clear";
-  } catch (error) {
-    console.log("Usando clima por defecto (Despejado)...");
-    estadoAventura.climaActual = "Clear";
-  }
-  
-  generarRecomendacionScout();
-}
+        const AppData = {
+            vehicles: [
+                { id: 'atv', nombre: 'Cuatrimoto (ATV) con Sonido', marca: 'Can-Am', modelo: 'Motor 550', precio: 800, icon: '🏍️', desc: 'Contacto directo con la naturaleza y adrenalina.' },
+                { id: 'rzr', nombre: 'Racer (Rzr)', marca: 'Can-Am', modelo: 'Maverick X3', precio: 3000, icon: '🚙', desc: 'Potencia, estabilidad y suspensión de nivel superior.' }
+            ]
+        };
 
-// 2. Cambiar vehículo dinámicamente desde la interfaz
-function seleccionarVehiculo(idVehiculo) {
-  estadoAventura.vehiculoSeleccionado = idVehiculo;
-  
-  // Resaltar visualmente la tarjeta seleccionada (opcional)
-  console.log(`Vehículo cambiado a: ${idVehiculo}`);
-  
-  // Actualizar el scout de inmediato sin volver a llamar a la API
-  generarRecomendacionScout();
-}
+        const MazaventuraApp = {
+            lang: 'es',
+            weather: 'Clear', // Simulado de la API del clima
+            selectedVehicle: null,
+            mapInstance: null,
 
-// 3. Renderizar el output de la IA
-function generarRecomendacionScout() {
-  const scoutBox = document.getElementById("ai-scout-output");
-  const idioma = localStorage.getItem("preferred_lang") || "es";
-  
-  // Construir la llave de búsqueda (Ej: "atv_sonido_Rain")
-  const llaveConfig = `${estadoAventura.vehiculoSeleccionado}_${estadoAventura.climaActual}`;
-  const textoRecomendacion = recomendacionesIA[idioma][llaveConfig];
-  
-  // Cambiar el diseño según el clima para dar feedback visual
-  if (estadoAventura.climaActual === "Rain") {
-    scoutBox.className = "p-4 bg-blue-950/60 border border-blue-500 text-blue-200 rounded-lg shadow-inner";
-  } else {
-    scoutBox.className = "p-4 bg-amber-950/40 border border-amber-500/70 text-amber-100 rounded-lg shadow-inner";
-  }
-  
-  scoutBox.innerHTML = textoRecomendacion;
-}
+            init() {
+                this.bindEvents();
+                this.renderVehicles();
+                this.initMap();
+                this.updateUI();
+            },
 
+            bindEvents() {
+                document.getElementById('langToggle').addEventListener('change', (e) => this.setLang(e.target.value));
+                document.getElementById('btn-pay-30').addEventListener('click', () => this.generateQR(0.3));
+                document.getElementById('btn-pay-60').addEventListener('click', () => this.generateQR(0.6));
+                document.getElementById('btn-pay-100').addEventListener('click', () => this.generateQR(1.0));
+            },
 
-// Dentro de tu función renderizarCatalogo()...
-tarjeta.innerHTML = `
-  <div class="flex justify-between items-start mb-4">
-    <h3 class="text-xl font-bold text-white">${vehiculo.icono} ${vehiculo.nombre}</h3>
-    <span class="bg-orange-600 text-white text-xs font-bold px-3 py-1 rounded-full">
-      $${vehiculo.precio} ${vehiculo.moneda}
-    </span>
-  </div>
-  <p class="text-orange-400 text-sm font-semibold mb-2">${vehiculo.etiqueta}</p>
-  <p class="text-gray-300 text-sm mb-4">${vehiculo.descripcion}</p>
-  <button onclick="seleccionarVehiculo('${vehiculo.id}')" class="w-full bg-orange-500 text-white font-bold py-2 rounded hover:bg-orange-600 transition">
-    Seleccionar y Ver Recomendación
-  </button>
-`;
-.
+            t(key) { return DICT[this.lang][key] || key; },
 
-function renderizarCatalogo() {
-    const contenedor = document.getElementById('vehiculos-container');
-    contenedor.innerHTML = ''; 
+            setLang(newLang) {
+                this.lang = newLang;
+                this.updateUI();
+                this.renderVehicles();
+                if(this.selectedVehicle) this.selectVehicle(this.selectedVehicle.id);
+            },
 
-    catalogoMazaventura.forEach(vehiculo => {
-      const tarjeta = document.createElement('div');
-      // Diseño en modo oscuro: fondo oscuro, bordes sutiles y acentos naranjas
-      tarjeta.className = "bg-gray-800 border border-gray-700 rounded-xl p-6 hover:border-orange-500 transition-all shadow-lg";
-      
-      tarjeta.innerHTML = `
-        <div class="flex justify-between items-start mb-3">
-          <h3 class="text-xl font-bold text-white">${vehiculo.icono} ${vehiculo.nombre}</h3>
-          <span class="bg-orange-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-            $${vehiculo.precio} ${vehiculo.moneda}
-          </span>
-        </div>
-        
-        <p class="text-orange-400 text-sm font-semibold mb-4">${vehiculo.etiqueta}</p>
-        
-        <div class="flex gap-2 mb-4">
-          <span class="bg-gray-900 border border-gray-600 text-gray-300 text-xs px-2 py-1 rounded flex items-center">
-            🛡️ Marca: ${vehiculo.marca}
-          </span>
-          <span class="bg-gray-900 border border-gray-600 text-gray-300 text-xs px-2 py-1 rounded flex items-center">
-            ⚙️ ${vehiculo.modelo}
-          </span>
-        </div>
+            updateUI() {
+                document.querySelectorAll('[data-i18n]').forEach(el => {
+                    const key = el.getAttribute('data-i18n');
+                    el.innerHTML = this.t(key);
+                });
+            }
 
-        <p class="text-gray-300 text-sm mb-5 leading-relaxed">${vehiculo.descripcion}</p>
-        
-        <button onclick="seleccionarVehiculo('${vehiculo.id}')" class="w-full bg-white text-black font-bold py-2.5 rounded hover:bg-gray-200 transition-colors shadow">
-          Seleccionar y Ver Recomendación
-        </button>
-      `;
-      
-      contenedor.appendChild(tarjeta);
-    });
-  }
+            renderVehicles() {
+                const container = document.getElementById('vehiculosContainer');
+                container.innerHTML = AppData.vehicles.map(v => `
+                    <div id="card-${v.id}" data-id="${v.id}" class="vehicle-card glass p-5 rounded-xl cursor-pointer hover:border-purple-500 transition border-2 border-transparent relative overflow-hidden group">
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="text-xl font-bold text-white">${v.icon} ${v.nombre}</h4>
+                            <span class="bg-orange-600 text-white text-xs font-bold px-3 py-1 rounded-full">$${v.precio} MXN</span>
+                        </div>
+                        <div class="flex gap-2 mb-3">
+                            <span class="bg-black/60 border border-gray-600 text-gray-300 text-[10px] px-2 py-1 rounded">🛡️ ${v.marca}</span>
+                            <span class="bg-black/60 border border-gray-600 text-gray-300 text-[10px] px-2 py-1 rounded">⚙️ ${v.modelo}</span>
+                        </div>
+                        <p class="text-sm text-gray-400 mb-4">${v.desc}</p>
+                        <button class="w-full bg-white/10 text-white font-bold py-2 rounded text-sm group-hover:bg-purple-600 transition">${this.t('select_btn')}</button>
+                    </div>
+                `).join('');
 
+                // Asignar eventos de clic a las tarjetas
+                document.querySelectorAll('.vehicle-card').forEach(card => {
+                    card.addEventListener('click', () => this.selectVehicle(card.getAttribute('data-id')));
+                });
+            },
 
-const catalogoMazaventura = [
-  {
-    id: "atv_sonido",
-    nombre: "Cuatrimoto (ATV) con Sonido",
-    etiqueta: "Interacción Todo Terreno",
-    descripcion: "Siente la adrenalina y el contacto directo con la naturaleza en cada ruta. Incluye equipo de sonido para que le pongas ritmo a tu aventura.",
-    precio: 800,
-    moneda: "MXN",
-    icono: "🏍️"
-  },
-  {
-    id: "rzr_racer",
-    nombre: "Racer (Rzr)",
-    etiqueta: "Potencia y Estabilidad",
-    descripcion: "Paseos de alta potencia ideales para dominar cualquier camino o ruta con la máxima resistencia.",
-    precio: 3000,
-    moneda: "MXN",
-    icono: "🚙"
-  }
-];
+            selectVehicle(id) {
+                this.selectedVehicle = AppData.vehicles.find(v => v.id === id);
+                
+                // Actualización Visual de Selección
+                document.querySelectorAll('.vehicle-card').forEach(el => el.classList.remove('border-purple-500', 'bg-purple-900/20'));
+                document.getElementById(`card-${id}`).classList.add('border-purple-500', 'bg-purple-900/20');
 
+                // IA Scout Update
+                const scoutKey = `${id}_${this.weather}`;
+                const output = document.getElementById('scoutOutput');
+                output.className = "p-5 bg-amber-900/30 border border-amber-500/50 text-amber-100 rounded-xl text-sm animate-fade shadow-inner";
+                output.innerHTML = AI_LOGIC[this.lang][scoutKey] || AI_LOGIC[this.lang][`${id}_Clear`];
 
-const dictionary = {
-  es: {
-    scout_title: "IA Scout - Clima y Rutas",
-    scout_desc: "Tu asistente en tiempo real para la aventura.",
-    weather_clear: "☀️ ¡Cielo despejado! Las rutas de velocidad están en perfectas condiciones.",
-    weather_rain: "🌧️ ¡Está lloviendo! Las rutas de lodo como 'Cascada El Salto' están al 100% de diversión. Conduce con precaución.",
-    map_btn: "Ver Mapa de Expedición"
-  },
-  en: {
-    scout_title: "AI Scout - Weather & Routes",
-    scout_desc: "Your real-time adventure assistant.",
-    weather_clear: "☀️ Clear skies! High-speed routes are in perfect condition.",
-    weather_rain: "🌧️ It's raining! Mud routes like 'El Salto Waterfall' are at 100% fun capacity. Drive safely.",
-    map_btn: "View Expedition Map"
-  }
-};
+                // Activar Checkout Mercado Pago
+                const paySection = document.getElementById('paymentSection');
+                paySection.classList.remove('hidden');
+                document.getElementById('payVehName').innerText = this.selectedVehicle.nombre;
+                document.getElementById('payVehPrice').innerText = `$${this.selectedVehicle.precio.toLocaleString()} MXN`;
+                
+                document.getElementById('qrResultBox').classList.add('hidden');
+                setTimeout(() => paySection.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
+            },
 
-function changeLanguage(lang) {
-  document.querySelectorAll("[data-i18n]").forEach(element => {
-    const key = element.getAttribute("data-i18n");
-    if (dictionary[lang][key]) {
-      element.innerText = dictionary[lang][key];
-    }
-  });
-  localStorage.setItem("preferred_lang", lang);
-}
+            generateQR(percentage) {
+                if(!this.selectedVehicle) return;
 
-// Listener del selector
-document.getElementById("languageToggle").addEventListener("change", (e) => {
-  changeLanguage(e.target.value);
-});
+                const basePrice = this.selectedVehicle.precio;
+                const discount = (percentage === 1.0) ? 0.05 : 0;
+                const finalAmount = basePrice * percentage * (1 - discount);
+                
+                const qrBox = document.getElementById('qrResultBox');
+                const amountText = document.getElementById('qrFinalAmount');
+                const discountTag = document.getElementById('qrDiscountTag');
+                
+                qrBox.classList.remove('hidden');
+                amountText.innerText = `$${finalAmount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                
+                if(discount > 0) {
+                    discountTag.innerText = this.t('discount_text');
+                } else {
+                    discountTag.innerText = "";
+                }
+            },
 
+            initMap() {
+                this.mapInstance = L.map('map', { zoomControl: false }).setView([19.9167, -103.0167], 14);
+                L.control.zoom({ position: 'bottomright' }).addTo(this.mapInstance);
+                
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                    attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+                    subdomains: 'abcd',
+                    maxZoom: 19
+                }).addTo(this.mapInstance);
+
+                const marker = L.marker([19.9167, -103.0167]).addTo(this.mapInstance);
+                marker.bindPopup("<b class='text-black'>Base MAZAVENTURA</b>").openPopup();
+                
+                L.polyline([[19.9167, -103.0167], [19.9200, -103.0100], [19.9300, -103.0050]], {
+                    color: '#BA55D3', weight: 4, opacity: 0.8, dashArray: '10, 10'
+                }).addTo(this.mapInstance);
+            }
+        };
+
+        // Arrancar la app
+        window.addEventListener('DOMContentLoaded', () => MazaventuraApp.init());
+    </script>
