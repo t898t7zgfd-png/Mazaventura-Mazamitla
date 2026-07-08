@@ -98,23 +98,6 @@
                 });
             }
 
-            renderVehicles() {
-                const container = document.getElementById('vehiculosContainer');
-                container.innerHTML = AppData.vehicles.map(v => `
-                    <div id="card-${v.id}" data-id="${v.id}" class="vehicle-card glass p-5 rounded-xl cursor-pointer hover:border-purple-500 transition border-2 border-transparent relative overflow-hidden group">
-                        <div class="flex justify-between items-start mb-2">
-                            <h4 class="text-xl font-bold text-white">${v.icon} ${v.nombre}</h4>
-                            <span class="bg-orange-600 text-white text-xs font-bold px-3 py-1 rounded-full">$${v.precio} MXN</span>
-                        </div>
-                        <div class="flex gap-2 mb-3">
-                            <span class="bg-black/60 border border-gray-600 text-gray-300 text-[10px] px-2 py-1 rounded">🛡️ ${v.marca}</span>
-                            <span class="bg-black/60 border border-gray-600 text-gray-300 text-[10px] px-2 py-1 rounded">⚙️ ${v.modelo}</span>
-                        </div>
-                        <p class="text-sm text-gray-400 mb-4">${v.desc}</p>
-                        <button class="w-full bg-white/10 text-white font-bold py-2 rounded text-sm group-hover:bg-purple-600 transition">${this.t('select_btn')}</button>
-                    </div>
-                `).join('');
-
                 // Asignar eventos de clic a las tarjetas
                 document.querySelectorAll('.vehicle-card').forEach(card => {
                     card.addEventListener('click', () => this.selectVehicle(card.getAttribute('data-id')));
@@ -183,6 +166,132 @@
                 }).addTo(this.mapInstance);
             }
         };
+
+  <script>
+        // CONFIGURACIÓN DE RUTAS MAESTRAS (Para actualizaciones sencillas sin tocar HTML)
+        const ROUTES_DATA = [
+            {
+                id: "sierra-tigre",
+                title: "Sierra del Tigre",
+                duration: "1 Hora",
+                category: "Estándar",
+                distance: "12 km",
+                difficulty: "Baja-Media",
+                isExclusive: false,
+                isVip: false,
+                pois: ["Mirador de la Sierra", "Senderos del Tigre"],
+                description: "Una inmersión perfecta y rápida por los senderos altos de Mazamitla con espectaculares panorámicas.",
+                popularity: 88,
+                price: 1500,
+                image: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=600"
+            },
+            {
+                id: "malecon-presa",
+                title: 'Malecón "Presa" Valle de Juárez',
+                duration: "2 Horas",
+                category: "Estándar",
+                distance: "24 km",
+                difficulty: "Media",
+                isExclusive: false,
+                isVip: false,
+                pois: ["Mirador Sierra del Tigre", "Valle de Juárez", "Malecón de la Presa"],
+                description: "Excelente recorrido combinado que te lleva desde el denso bosque hasta el espejo de agua de la presa de Valle de Juárez.",
+                popularity: 94,
+                price: 2200,
+                image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=600"
+            },
+            {
+                id: "hacienda-abandonada",
+                title: "Hacienda Abandonada",
+                duration: "1 Hora",
+                category: "Estándar",
+                distance: "14 km",
+                difficulty: "Baja",
+                isExclusive: false,
+                isVip: false,
+                pois: ["Mirador Corazón de la Aguacatera", "VisitaA La Hacienda Abandonada"],
+                description: "Viaje de exploración fotográfica por ruinas coloniales rodeadas de un asombroso cultivo ecológico.",
+                popularity: 72,
+                price: 1500,
+                image: "https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?q=80&w=600"
+            },
+            {
+                id: "cascada-salto",
+                title: "Cascada el Salto",
+                duration: "2 Horas",
+                category: "Estándar",
+                distance: "20 km",
+                difficulty: "Media",
+                isExclusive: false,
+                isVip: false,
+                pois: ["Sendero boscoso", "Mirador Piedras Blancas", "Cascada El Salto"],
+                description: "Ruta húmeda clásica de Mazamitla, cruzando arroyos de montaña hasta el imponente salto de agua natural.",
+                popularity: 96,
+                price: 2200,
+                image: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?q=80&w=600"
+            },
+            {
+                id: "dos-aguas",
+                title: "Mirador Dos Aguas",
+                duration: "1 Hora",
+                category: "Estándar",
+                distance: "11 km",
+                difficulty: "Baja-Media",
+                isExclusive: false,
+                isVip: false,
+                pois: ["Mirador Natural Dos Aguas", "Cruce de Arroyos"],
+                description: "La frescura de dos caudales de montaña convergiendo en un mirador imponente rodeado de pinos gigantes.",
+                popularity: 85,
+                price: 1500,
+                image: "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?q=80&w=600"
+            },
+            {
+                id: "barranca-verde",
+                title: "Barranca Verde",
+                duration: "2 Horas",
+                category: "Exclusiva de MAZAVENTURA",
+                distance: "Fijada por Duración",
+                difficulty: "Alta (Solo Pilotos con Experiencia)",
+                isExclusive: true,
+                isVip: false,
+                pois: [], // Se ocultan intencionalmente los POIs para generar interés y misterio
+                description: "⚠️ RUTA EXCLUSIVA: Diseñada únicamente para conductores con experiencia. Caminos sumamente irregulares, demandantes y ajetreados por desfiladeros salvajes.",
+                popularity: 90,
+                price: 2800,
+                image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=600"
+            },
+            {
+                id: "camino-real",
+                title: "CAMINO REAL DEL TIGRE",
+                duration: "3 Horas",
+                category: "VIP",
+                distance: "38 km",
+                difficulty: "Alta",
+                isExclusive: false,
+                isVip: true,
+                pois: ["Ruta Ancestral de los Tigres", "Mirador Divisadero", "Paso de las Rocas"],
+                description: "Expedición VIP de larga duración. Recorre caminos ancestrales de carretas, cruzando los límites más remotos de la sierra.",
+                popularity: 98,
+                price: 3500,
+                image: "https://images.unsplash.com/photo-1501854140801-50d01698950b?q=80&w=600"
+            },
+            {
+                id: "puerta-cielo",
+                title: 'Mirador "Puerta del Cielo"',
+                duration: "3 Horas",
+                category: "VIP",
+                distance: "35 km",
+                difficulty: "Media-Alta",
+                isExclusive: false,
+                isVip: true,
+                pois: ["Mirador Divino", "Punto Más Alto 2200msnm", 'Cantina "La Chuta Parada Obligatoria" (2065msnm)'],
+                description: "Viaje de lujo directo a las nubes. Incluye parada obligatoria en la Popular Cantina La Chuta para hidratación.",
+                popularity: 99,
+                price: 3500,
+                image: "https://images.unsplash.com/photo-1472214222541-d510753a4707?q=80&w=600"
+            }
+        ];
+
 
         // Arrancar la app
         window.addEventListener('DOMContentLoaded', () => MazaventuraApp.init());
