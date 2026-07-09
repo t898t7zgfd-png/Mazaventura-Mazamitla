@@ -66,7 +66,7 @@ const AI_INSIGHTS = {
     atv_Clear: "☀️ <b>Día Perfecto.</b> Cielo despejado. Disfruta de la total libertad de la cuatrimoto. Conecta tu playlist al sistema de sonido y siente el viento.",
     atv_Rain: "🌧️ <b>¡Lodo y Adrenalina Pura!</b> Lluvia detectada. El clima es perfecto para la interacción todo terreno de la cuatrimoto. ¡Sube el volumen y domina el barro!",
     rzr_Clear: "☀️ <b>Velocidad y Paisajes.</b> Excelente visibilidad. Ideal para exprimir la potencia del Maverick X3 en rutas largas con comodidad suprema.",
-    rzr_Rain: "🌧️ <b>Potencia Antilodo.</b> La lluvia pone a prueba la tracción 4x4 de tu Maverick X3. Caminos como 'Barranca Verde' se vuelven extremos. Avanza con seguridad y domina el terreno."
+    rzr_Rain: "🌧️ <b>Potencia Antilodo.</b> La lluvia pone a prueba la tracción 4x4 de tu Maverick X3. Caminos como 'Barranca Verde' se vuelven extremos. Avanza con seguridad y domina el ter[...]"
   },
   en: {
     atv_Clear: "☀️ <b>Perfect Day.</b> Clear skies. Enjoy the total freedom of the ATV. Connect your playlist to the sound system and feel the breeze.",
@@ -697,13 +697,26 @@ class UIController {
 
   /**
    * Actualiza todas las traducciones en la interfaz
+   * Versión mejorada con validación y manejo de errores
    */
   updateUI() {
     try {
       document.querySelectorAll("[data-i18n]").forEach((el) => {
+        // Obtiene el atributo data-i18n
         const key = el.getAttribute("data-i18n");
-        if (key) {
-          el.innerHTML = this.service.getTranslation(key);
+        
+        // Validación: asegurar que la clave no esté vacía y sea una cadena válida
+        if (!key || typeof key !== "string") {
+          console.warn("Invalid or missing data-i18n attribute", el);
+          return;
+        }
+        
+        // Obtiene la traducción usando getTranslation (que ya valida)
+        const translation = this.service.getTranslation(key);
+        
+        // Aplica la traducción solo si es diferente (mejor rendimiento)
+        if (el.innerHTML !== translation) {
+          el.innerHTML = translation;
         }
       });
     } catch (error) {
