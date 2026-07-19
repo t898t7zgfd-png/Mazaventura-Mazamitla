@@ -715,8 +715,8 @@ class UIController {
         const translation = this.service.getTranslation(key);
         
         // Aplica la traducción solo si es diferente (mejor rendimiento)
-        if (el.innerHTML !== translation) {
-          el.innerHTML = translation;
+        if (el.textContent !== translation) {
+          el.textContent = translation;
         }
       });
     } catch (error) {
